@@ -62,13 +62,14 @@ public:
     MessageClient(std::shared_ptr<Channel> channel)
         : stub_(MessageSender::NewStub(channel)) {}
 
-    SendMessageResponse SendMessage( const std::string& aircraft_sn,
+    SendMessageResponse SendMessage( const std::string& aircraft_sn, 
 	    	      const std::string& ofp_id,
 	    	      const std::string& jcn,
 	    	      const std::string& wce,
 	    	      const std::string& base_id,
 	    	      const std::string& unit_id,
 	    	      const std::string& creation_dtg )
+//    SendMessageResponse SendMessage( struct Message msg )
     {
         // Create the request
         CplTicketRequest request;
@@ -94,10 +95,10 @@ public:
         // Process the response
         if (status.ok()) 
 	{
-		std::cout << "Client received response message id: " << response.message_id() << std::endl;
+		std::cout << "Client received reply message id: " << response.message_id() << std::endl;
 		messaging::ErrorInfo error_info = response.error();
-		std::cout << "Client received response message: " << error_info.error_message() << std::endl;
-		std::cout << "Client received response code: " << error_info.response_code() << std::endl;
+		std::cout << "Client received reply message: " << error_info.error_message() << std::endl;
+		std::cout << "Client received reply code: " << error_info.response_code() << std::endl;
         } 
 	else 
 	{
@@ -111,7 +112,9 @@ private:
     std::unique_ptr<MessageSender::Stub> stub_;
 };
 
-constexpr char kRootCertificate[] = "/home/mkelly/grpc/demo/ca.crt";
+constexpr char kRootCertificate[] =   "/home/mkelly/grpc/demo/ca.crt";
+constexpr char kClientPrivateKey[] =  "/home/mkelly/grpc/demo/client.key";
+constexpr char kClientCertificate[] = "/home/mkelly/grpc/demo/client.crt";
 
 std::string LoadStringFromFile(std::string path) {
   std::ifstream file(path);
@@ -133,11 +136,12 @@ int main(int argc, char** argv)
   std::string target_str = absl::GetFlag(FLAGS_target);
   std::cout << target_str << std::endl;
   // Build a SSL options for the channel
-  grpc::SslCredentialsOptions ssl_options;
-  ssl_options.pem_root_certs = LoadStringFromFile(kRootCertificate);
-  // Create a channel with SSL credentials
-  MessageClient sender(
-      grpc::CreateChannel(target_str, grpc::SslCredentials(ssl_options)));
+
+  grpc::SslCredentialsOptions ssl_opts;
+  ssl_opts.pem_root_certs = LoadStringFromFile(kRootCertificate);
+  ssl_opts.pem_private_key = LoadStringFromFile(kClientPrivateKey);
+  ssl_opts.pem_cert_chain = LoadStringFromFile(kClientCertificate);
+  MessageClient sender( grpc::CreateChannel(target_str, grpc::SslCredentials( ssl_opts ) ) );
 
   std::string input;
   std::cout << "Enter aircraft sn: ";

@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package messaging;
+
+service MessageSender {
+
+  rpc SendCplTicketRequest( CplTicketRequest) returns (SendMessageResponse) {}
+
+  rpc CheckMessageStatus(CheckMessageStatusRequest) returns (CheckMessageStatusResponse) {}
+}
+
+message CplTicketRequest {
+
+  string aircraft_sn = 1;
+  string ofp_id = 2;
+  string jcn = 3;
+  string wce = 4;
+  string base_id = 5;
+  string unit_id = 6;
+  string creation_dtg = 7;
+}
+
+message SendMessageResponse {
+
+  string message_id = 1;
+  ErrorInfo error = 2;
+}
+
+message ErrorInfo {
+
+  string error_message = 1;
+  uint32 response_code = 2;
+}
+
+message CheckMessageStatusRequest {
+
+  string message_id = 1;
+}
+
+message CheckMessageStatusResponse {
+
+  MessageStatus status = 1;
+  ErrorInfo error = 2;
+}
+
+enum MessageStatus {
+
+  PENDING = 0;
+  SUCCESS = 1;
+  ERROR = 2;
+}
